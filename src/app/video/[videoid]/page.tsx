@@ -39,7 +39,7 @@ export default function Page({ params }: {
     console.log("Duration:", duration);
 
     setProcessing(true);
-    const url = `blob:http://localhost:3000/${params.videoid}`;
+    const url = `blob:${process.env.NEXT_PUBLIC_SITE_URL}/${params.videoid}`;
 
     try {
       // fetching the video file
@@ -79,6 +79,7 @@ export default function Page({ params }: {
       setProcessing(false);
     }
   }
+
   
   return (
     <div className="grid lg:grid-cols-[1fr_400px] gap-6 p-6">
@@ -87,7 +88,7 @@ export default function Page({ params }: {
           ref={videoRef}
           className="w-full aspect-video"
           controls
-          src={`blob:http://localhost:3000/${params.videoid}`}
+          src={`blob:${process.env.NEXT_PUBLIC_SITE_URL}/${params.videoid}`}
         />
       </div>
       <VideoTrimmer
