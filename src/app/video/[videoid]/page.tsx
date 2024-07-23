@@ -27,7 +27,7 @@ export default function Page({ params }: {
     }
     console.log("Video loaded");
     console.log("Duration:", duration);
-  }, [videoRef]);
+  }, [videoRef, duration]);
 
   if (!loaded) {
     return <div>Loading FFmpeg...</div>
