@@ -1,24 +1,44 @@
 "use client"
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { useState } from 'react';
 
 type VideoTrimmerProps = {
   onProcessVideo: () => void | Promise<void>;
   duration: string[]; 
   setDuration: (duration: string[]) => void; 
   processing: boolean;
+  onPreviewVideo: () => void;  
+  clearPreviewUrl: () => void; 
 }
 
-export default function VideoTrimmer({ onProcessVideo, duration, setDuration, processing } : VideoTrimmerProps) {
+export default function VideoTrimmer({ 
+  onProcessVideo, 
+  duration, 
+  setDuration, 
+  processing, 
+  onPreviewVideo,  
+  clearPreviewUrl
+}: VideoTrimmerProps) {
+  const [error, setError] = useState<string | null>(null);
 
-  //TODO: validate input
+  const validateTime = (time: string): boolean => {
+    const timeRegex = /^(?:(?:([01]?\d|2[0-3]):)?([0-5]?\d):)?([0-5]?\d)$/;
+    return timeRegex.test(time);
+  };
+
   const handleDurationChange = (index: number, value: string) => {
-    const newDuration = [...duration];
-    newDuration[index] = value;
-    setDuration(newDuration);
+    if (validateTime(value)) {
+      const newDuration = [...duration];
+      newDuration[index] = value;
+      setDuration(newDuration);
+      clearPreviewUrl(); 
+      setError(null);
+    } else {
+      setError("Invalid time format. Please use HH:MM:SS");
+    }
   };
 
   return (
@@ -48,13 +68,16 @@ export default function VideoTrimmer({ onProcessVideo, duration, setDuration, pr
                 onChange={(e) => handleDurationChange(1, e.target.value)}
               />
             </Label>
+            {error && <p className="text-red-500">{error}</p>}
           </div>
         </CardContent>
       </Card>
-      <Button onClick={onProcessVideo} size="lg" disabled={processing}>
-        {processing ? 'Processing...' : 'Download Edited Video'}
+      <Button size="lg" onClick={onPreviewVideo} disabled={processing}> 
+        Preview
+      </Button>
+      <Button onClick={onProcessVideo} size="lg" disabled={processing || !!error}>
+        Download Edited Video
       </Button>
     </div>
   );
 };
-

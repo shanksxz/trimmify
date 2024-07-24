@@ -1,6 +1,5 @@
 "use client"
-
-import { useLayoutEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { fetchFile } from "@ffmpeg/util"
 import { useFfmpeg } from "@/utils/useFfmpeg"
 import VideoTrimmer from "@/components/shared/VideoTrimmer"
@@ -14,8 +13,9 @@ export default function Page({ params }: {
   const [duration, setDuration] = useState(["00:00:00", "00:00:00"]);
   const [processing, setProcessing] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (videoRef.current) {
       videoRef.current.onloadedmetadata = () => {
         const totalSeconds = Math.floor(videoRef.current!.duration);
@@ -25,66 +25,74 @@ export default function Page({ params }: {
         setDuration(["00:00:00", `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`]);
       };
     }
-    console.log("Video loaded");
-    console.log("Duration:", duration);
-  }, [videoRef, duration]);
+  }, [loaded, duration]);
 
   if (!loaded) {
     return <div>Loading FFmpeg...</div>
   }
 
-  const main = async () => {
+  const processVideo = async (isPreview: boolean) => {
+    if (isPreview && previewUrl) {
+      console.log("Using existing preview");
+      if (videoRef.current) {
+        videoRef.current.src = previewUrl;
+        videoRef.current.load();
+      }
+      return;
+    }
 
-    console.log("Processing video...");
+    console.log(isPreview ? "Generating preview..." : "Processing video...");
     console.log("Duration:", duration);
-
     setProcessing(true);
     const url = `blob:${process.env.NEXT_PUBLIC_SITE_URL}/${params.videoid}`;
-
     try {
-      // fetching the video file
       const video = await fetchFile(url);
       await ffmpeg.writeFile("input.mp4", video);
 
-      // args
+      const outputFileName = isPreview ? "preview.mp4" : "output.mp4";
       const args = [
         "-i", "input.mp4",
         "-ss", duration[0],
         "-to", duration[1],
-        "-c", "copy",
-        "-an",
-        "output.mp4"
+        "-c", "copy", "-an",
+        outputFileName
       ];
 
-      console.log("Executing FFmpeg command:", args.join(' '));
+      console.log(`Executing FFmpeg command for ${isPreview ? 'preview' : 'processing'}:`, args.join(' '));
       await ffmpeg.exec(args);
 
-      // read the output file
-      const data = await ffmpeg.readFile("output.mp4");
-      console.log("Trimmed video data:", data);
+      const data = await ffmpeg.readFile(outputFileName);
+      console.log(`${isPreview ? 'Preview' : 'Trimmed'} video data:`, data);
 
-      // create a download link
       const blob = new Blob([data], { type: 'video/mp4' });
-      const downloadUrl = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = downloadUrl;
-      a.download = 'trimmed_video.mp4';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(downloadUrl);
+      const blobUrl = URL.createObjectURL(blob);
+
+      if (isPreview) {
+        setPreviewUrl(blobUrl);
+        if (videoRef.current) {
+          videoRef.current.src = blobUrl;
+          videoRef.current.load();
+        }
+      } else {
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = 'trimmed_video.mp4';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(blobUrl);
+      }
     } catch (error) {
-      console.error("Error processing video:", error);
+      console.error(`Error ${isPreview ? 'generating preview' : 'processing video'}:`, error);
     } finally {
       setProcessing(false);
     }
   }
 
-  
   return (
-    <div className="grid lg:grid-cols-[1fr_400px] gap-6 p-6">
-        <div className="relative rounded-lg overflow-hidden">
-        <video 
+    loaded && (<div className="grid lg:grid-cols-[1fr_400px] gap-6 p-6">
+      <div className="relative rounded-lg overflow-hidden">
+        <video
           ref={videoRef}
           className="w-full aspect-video"
           controls
@@ -92,11 +100,13 @@ export default function Page({ params }: {
         />
       </div>
       <VideoTrimmer
-        onProcessVideo={main}
+        clearPreviewUrl={() => setPreviewUrl(null)}
+        onProcessVideo={() => processVideo(false)}
+        onPreviewVideo={() => processVideo(true)}
         duration={duration}
         setDuration={setDuration}
         processing={processing}
       />
-    </div>
+    </div>)
   )
 }
