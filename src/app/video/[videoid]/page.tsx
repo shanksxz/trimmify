@@ -1,8 +1,8 @@
 "use client"
 import { useEffect, useRef, useState } from "react"
 import { fetchFile } from "@ffmpeg/util"
-import { useFfmpeg } from "@/utils/useFfmpeg"
 import VideoTrimmer from "@/components/shared/VideoTrimmer"
+import { useFfmpeg } from "@/utils/context"
 
 export default function Page({ params }: {
   params: {
@@ -88,6 +88,7 @@ export default function Page({ params }: {
       setProcessing(false);
     }
   }
+
 
   return (
     loaded && (<div className="grid lg:grid-cols-[1fr_400px] gap-6 p-6">
