@@ -4,6 +4,7 @@ import { useRef, useState } from "react"
 import { Button } from "../ui/button"
 import { Input } from "../ui/input"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 export default function DragDrop() {
 
@@ -17,7 +18,9 @@ export default function DragDrop() {
         if (file && file.type.startsWith("video")) {
             const url = URL.createObjectURL(file);
             router.push(`/video/${url.split("/").pop()}`);
+            return;
         }
+        toast.error("Invalid file type. Please upload a video file.");
     }
 
     return (
