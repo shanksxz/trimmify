@@ -25,6 +25,7 @@ export default function VideoTrimmer({
   const [error, setError] = useState<string | null>(null);
 
   const validateTime = (time: string): boolean => {
+    //TODO: handle time validation in a better way
     const timeRegex = /^(?:(?:([01]?\d|2[0-3]):)?([0-5]?\d):)?([0-5]?\d)$/;
     return timeRegex.test(time);
   };

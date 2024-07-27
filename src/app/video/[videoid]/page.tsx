@@ -4,6 +4,7 @@ import { fetchFile } from "@ffmpeg/util"
 import VideoTrimmer from "@/components/shared/VideoTrimmer"
 import { useFfmpeg } from "@/utils/context"
 
+
 export default function Page({ params }: {
   params: {
     videoid: string
@@ -14,6 +15,7 @@ export default function Page({ params }: {
   const [processing, setProcessing] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [mute, setMute] = useState(false);
 
   useEffect(() => {
     if (videoRef.current) {
@@ -23,6 +25,7 @@ export default function Page({ params }: {
         const minutes = Math.floor((totalSeconds % 3600) / 60);
         const seconds = totalSeconds % 60;
         setDuration(["00:00:00", `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`]);
+        setMute(videoRef.current!.muted);
       };
     }
   }, [loaded, duration]);
@@ -44,19 +47,22 @@ export default function Page({ params }: {
     console.log(isPreview ? "Generating preview..." : "Processing video...");
     console.log("Duration:", duration);
     setProcessing(true);
-    const url = `blob:${process.env.NEXT_PUBLIC_SITE_URL}/${params.videoid}`;
+    const url = `blob:${window.location.origin}/${params.videoid}`;
     try {
       const video = await fetchFile(url);
       await ffmpeg.writeFile("input.mp4", video);
 
       const outputFileName = isPreview ? "preview.mp4" : "output.mp4";
+      console.log("mute", mute);
       const args = [
         "-i", "input.mp4",
         "-ss", duration[0],
         "-to", duration[1],
-        "-c", "copy", "-an",
+        "-c", "copy",
+        ...(mute ? ["-an"] : []),
         outputFileName
       ];
+      console.log("args", args);
 
       console.log(`Executing FFmpeg command for ${isPreview ? 'preview' : 'processing'}:`, args.join(' '));
       await ffmpeg.exec(args);
@@ -76,7 +82,7 @@ export default function Page({ params }: {
       } else {
         const a = document.createElement('a');
         a.href = blobUrl;
-        a.download = 'trimmed_video.mp4';
+        a.download = `trimmed-${params.videoid}.mp4`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -97,7 +103,7 @@ export default function Page({ params }: {
           ref={videoRef}
           className="w-full aspect-video"
           controls
-          src={`blob:${process.env.NEXT_PUBLIC_SITE_URL}/${params.videoid}`}
+          src={`blob:${window.location.origin}/${params.videoid}`}
         />
       </div>
       <VideoTrimmer
