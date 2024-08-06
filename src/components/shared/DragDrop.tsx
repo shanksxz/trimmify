@@ -7,70 +7,60 @@ import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
 export default function DragDrop() {
+  const [isDragging, setIsDragging] = useState(false);
+  const ref = useRef<HTMLInputElement>(null);
+  const router = useRouter();
 
-    const [isDragging, setIsDragging] = useState(false);
-    const ref = useRef<HTMLInputElement>(null);
-    const router = useRouter();
-
-    const handleChange = (
-        file : File | undefined
-    ) => {
-        if (file && file.type.startsWith("video")) {
-            const url = URL.createObjectURL(file);
-            router.push(`/video/${url.split("/").pop()}`);
-            return;
-        }
-        toast.error("Invalid file type. Please upload a video file.");
+  const handleChange = (file: File | undefined) => {
+    if (file && file.type.startsWith("video")) {
+      const url = URL.createObjectURL(file);
+      router.push(`/video/${url.split("/").pop()}`);
+      return;
     }
+    toast.error("Invalid file type. Please upload a video file.");
+  }
 
-    return (
-        <div className="h-dvh p-5 flex justify-center items-center">
-            <div
-                className="border-2 border-dashed border-gray-300 w-full h-full flex justify-center items-center"
-                onDragOver={
-                    (e: React.DragEvent<HTMLDivElement>) => {
-                        e.preventDefault();
-                        console.log("dragging over");
-                        setIsDragging(true);
-                    }
-                }
-                onDragLeave={() => setIsDragging(false)}
-                onDrop={
-                    (e: React.DragEvent<HTMLDivElement>) => {
-                        console.log("dropped");
-                        e.preventDefault();
-                        setIsDragging(false);
-                        const file = e.dataTransfer.files[0];
-                        handleChange(file);
-                    }
-                }
-            >
-
-                <Input
-                    ref={ref}
-                    type="file"
-                    className="hidden"
-                    id="file-upload"
-                    typeof="video/*"
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        const file = e.target.files?.[0];
-                        handleChange(file);
-                    }}
-                />
-                {!isDragging &&
-                    <Button
-                        onClick={() => ref.current?.click()}
-                        className="flex items-center" 
-                    >
-                        <UploadIcon className="mr-2 h-5 w-5" />
-                        Upload File
-                    </Button>
-                }
-            </div>
+  return (
+    <div className="flex items-center justify-center min-h-screen w-full bg-background ">
+      <div className="w-full h-full p-6 flex flex-col items-center justify-center">
+        <div 
+          className="w-full h-dvh border-2 border-dashed rounded-md flex flex-col items-center justify-center space-y-4 text-muted-foreground hover:border-primary transition-colors"
+          onDragOver={(e) => {
+            e.preventDefault();
+            setIsDragging(true);
+          }}
+          onDragLeave={() => setIsDragging(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setIsDragging(false);
+            const file = e.dataTransfer.files[0];
+            handleChange(file);
+          }}
+        >
+          <UploadIcon className="w-16 h-16" />
+          <p className="text-lg">Drag and drop a video or click to upload</p>
+          <Input
+            ref={ref}
+            type="file"
+            className="hidden"
+            id="file-upload"
+            accept="video/*"
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+              const file = e.target.files?.[0];
+              handleChange(file);
+            }}
+          />
+          <Button 
+            className="mt-4" 
+            onClick={() => ref.current?.click()}
+          >
+            Select Video
+          </Button>
         </div>
-    )
+      </div>
+    </div>
+  )
 }
-
 
 function UploadIcon(props: any) {
     return (
