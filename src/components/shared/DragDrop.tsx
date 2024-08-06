@@ -21,10 +21,9 @@ export default function DragDrop() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen w-full bg-background ">
-      <div className="w-full h-full md:p-6 p-2 flex flex-col items-center justify-center">
+    <div className="flex md:p-6 p-2 items-center justify-center h-dvh w-full bg-background ">
         <div 
-          className="w-full h-dvh border-2 border-dashed rounded-md flex flex-col items-center justify-center space-y-4 text-muted-foreground hover:border-primary transition-colors"
+          className="w-full h-full border-2 border-dashed rounded-md flex flex-col items-center justify-center space-y-4 text-muted-foreground hover:border-primary transition-colors"
           onDragOver={(e) => {
             e.preventDefault();
             setIsDragging(true);
@@ -38,7 +37,7 @@ export default function DragDrop() {
           }}
         >
           <UploadIcon className="w-16 h-16" />
-          <p className="text-lg text-center p-2 md:p-0">Drag and drop a video or click to upload</p>
+          <p className="text-lg text-center p-2">Drag and drop a video or click to upload</p>
           <Input
             ref={ref}
             type="file"
@@ -58,7 +57,6 @@ export default function DragDrop() {
           </Button>
         </div>
       </div>
-    </div>
   )
 }
 
