@@ -24,7 +24,7 @@ export default function DragDrop() {
     }
 
     return (
-        <div className="h-screen p-5 flex justify-center items-center">
+        <div className="h-dvh p-5 flex justify-center items-center">
             <div
                 className="border-2 border-dashed border-gray-300 w-full h-full flex justify-center items-center"
                 onDragOver={
