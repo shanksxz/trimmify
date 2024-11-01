@@ -1,62 +1,92 @@
 "use client"
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { useState, useEffect } from "react"
+import { formatTime } from "@/utils"
+import { toast } from "sonner"
 
 type VideoTrimmerProps = {
-  onProcessVideo: () => void | Promise<void>
-  duration: string[]
-  setDuration: (duration: string[]) => void
+  end: number
+  setEnd: (end: number) => void
+  onProcessVideo: (start: number, end: number, isPreview: boolean) => void
   processing: boolean
-  onPreviewVideo: () => void
+  onPreviewVideo: (start: number, end: number, isPreview: boolean) => void
   clearPreviewUrl: () => void
-  currentTime: number
 }
 
 export default function VideoTrimmer({
   onProcessVideo,
-  duration,
-  setDuration,
+  end,
+  setEnd,
   processing,
   onPreviewVideo,
   clearPreviewUrl,
-  currentTime,
 }: VideoTrimmerProps) {
-  const [error, setError] = useState<string | null>(null)
-
-  const validateTime = (time: string): boolean => {
-    const timeRegex = /^(?:(?:([01]?\d|2[0-3]):)?([0-5]?\d):)?([0-5]?\d)$/
-    return timeRegex.test(time)
-  }
-
-  const handleDurationChange = (index: number, value: string) => {
-    if (validateTime(value)) {
-      const newDuration = [...duration]
-      newDuration[index] = value
-      setDuration(newDuration)
-      clearPreviewUrl()
-      setError(null)
-    } else {
-      setError("Invalid time format. Please use HH:MM:SS")
-    }
-  }
+  const [localDuration, setLocalDuration] = useState(formatTime(end))
+  const [localCurrentTime, setLocalCurrentTime] = useState(formatTime(0))
 
   useEffect(() => {
-    const formatTime = (time: number) => {
-      const hours = Math.floor(time / 3600)
-      const minutes = Math.floor((time % 3600) / 60)
-      const seconds = Math.floor(time % 60)
-      return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds
-        .toString()
-        .padStart(2, "0")}`
-    }
+    console.log("Setting local duration")
+    console.log("End time : ", end)
+    setLocalDuration(formatTime(end))
+    setLocalCurrentTime(formatTime(0))
+  }, [end])
 
-    const formattedTime = formatTime(currentTime)
-    setDuration([formattedTime, duration[1]])
-  }, [currentTime, setDuration])
+  const parseTimeToSeconds = (value: string): number => {
+    const time = value.split(":").map(Number)
+    if (time.length !== 3 || time.some(isNaN)) {
+      throw new Error("Invalid time format. Use HH:MM:SS.")
+    }
+    return time[0] * 3600 + time[1] * 60 + time[2]
+  }
+
+  const validateTimes = (): { startTime: number, endTime: number } | null => {
+    try {
+      const startTime = parseTimeToSeconds(localCurrentTime)
+      const endTime = parseTimeToSeconds(localDuration)
+
+      if (startTime < 0) {
+        toast.error("Start time cannot be negative.")
+        return null
+      }
+
+      if (endTime > end) {
+        toast.error(`End time cannot exceed video duration of ${formatTime(end)}`)
+        return null
+      }
+
+      if (startTime >= endTime) {
+        toast.error("Start time must be before end time.")
+        return null
+      }
+
+      return { startTime, endTime }
+    } catch (err) {
+      toast.error("Invalid time format. Use HH:MM:SS.")
+      return null
+    }
+  }
+
+  const handlePreview = () => {
+    const validatedTimes = validateTimes();
+    clearPreviewUrl();
+    if (validatedTimes) {
+      const start = parseTimeToSeconds(localCurrentTime) || 0
+      const ee = parseTimeToSeconds(localDuration) || end
+      onPreviewVideo(start, ee, true)
+    }
+  }
+
+  const handleProcessVideo = () => {
+    const validatedTimes = validateTimes()
+    const start = parseTimeToSeconds(localCurrentTime) || 0 
+    const ee = parseTimeToSeconds(localDuration) || end
+    if (validatedTimes) {
+      onProcessVideo(start, ee, false)
+    }
+  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -72,8 +102,9 @@ export default function VideoTrimmer({
               <Input
                 className="mt-2 w-full"
                 type="text"
-                value={duration[0]}
-                onChange={(e) => handleDurationChange(0, e.target.value)}
+                value={localCurrentTime}
+                onChange={(e) => setLocalCurrentTime(e.target.value)}
+                placeholder="HH:MM:SS"
               />
             </Label>
             <Label>
@@ -81,19 +112,27 @@ export default function VideoTrimmer({
               <Input
                 className="mt-2 w-full"
                 type="text"
-                value={duration[1]}
-                onChange={(e) => handleDurationChange(1, e.target.value)}
+                value={localDuration}
+                onChange={(e) => setLocalDuration(e.target.value)}
+                placeholder="HH:MM:SS"
               />
             </Label>
-            {error && <p className="text-red-500 text-sm">{error}</p>}
           </div>
         </CardContent>
       </Card>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <Button size="lg" onClick={onPreviewVideo} disabled={processing}>
+        <Button
+          size="lg"
+          onClick={handlePreview}
+          disabled={processing}
+        >
           Preview
         </Button>
-        <Button onClick={onProcessVideo} size="lg" disabled={processing || !!error}>
+        <Button
+          onClick={handleProcessVideo}
+          size="lg"
+          disabled={processing}
+        >
           Download Edited Video
         </Button>
       </div>
