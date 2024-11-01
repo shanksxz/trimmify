@@ -124,6 +124,7 @@ export default function VideoPlayer({ src, onDurationChange, onTimeUpdate, onMut
   }
 
   const handleKeyPress = (e: KeyboardEvent) => {
+    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
     switch (e.key.toLowerCase()) {
       case " ":
       case "k":
