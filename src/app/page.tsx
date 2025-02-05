@@ -1,5 +1,5 @@
-import DragDrop from "@/components/shared/DragDrop";
+import DragDrop from "@/features/drag-drop/components/drag-drop";
 
 export default function Page() {
-  return <DragDrop />
+	return <DragDrop />;
 }
