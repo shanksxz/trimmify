@@ -10,6 +10,7 @@ export async function processVideo(
 		endTime: string;
 		mute: boolean;
 		isPreview?: boolean;
+		quality?: VideoQuality;
 	},
 ): Promise<string> {
 	try {
@@ -24,11 +25,26 @@ export async function processVideo(
 			options.startTime,
 			"-to",
 			options.endTime,
-			"-c",
-			"copy",
-			...(options.mute ? ["-an"] : []),
-			outputFileName,
 		];
+
+		if (options.quality && options.quality.width !== -1) {
+			args.push(
+				"-vf",
+				`scale=${options.quality.width}:${options.quality.height}`,
+				"-b:v",
+				options.quality.bitrate,
+			);
+		} else {
+			args.push("-c:v", "copy");
+		}
+
+		if (options.mute) {
+			args.push("-an");
+		} else {
+			args.push("-c:a", "aac");
+		}
+
+		args.push(outputFileName);
 
 		await ffmpeg.exec(args);
 		const videoData = await ffmpeg.readFile(outputFileName);

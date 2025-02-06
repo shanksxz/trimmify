@@ -2,8 +2,25 @@
 
 import { useFfmpeg } from "@/utils/context";
 import { useLayoutEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { downloadVideo, formatTime, processVideo } from "../utils";
 import VideoTrimmer from "./video-trimmer";
+// import { VideoQuality, VIDEO_QUALITIES } from "@/features/video/types";
+
+export type VideoQuality = {
+	label: string;
+	width: number;
+	height: number;
+	bitrate: string;
+};
+
+export const VIDEO_QUALITIES: VideoQuality[] = [
+	{ label: "Original", width: -1, height: -1, bitrate: "copy" },
+	{ label: "1080p", width: 1920, height: 1080, bitrate: "2M" },
+	{ label: "720p", width: 1280, height: 720, bitrate: "1M" },
+	{ label: "480p", width: 854, height: 480, bitrate: "800k" },
+	{ label: "360p", width: 640, height: 360, bitrate: "500k" },
+];
 
 export default function VideoPlayer({
 	videoUrl,
@@ -18,6 +35,9 @@ export default function VideoPlayer({
 	const [processing, setProcessing] = useState(false);
 	const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 	const [mute, setMute] = useState(false);
+	const [selectedQuality, setSelectedQuality] = useState<VideoQuality>(
+		VIDEO_QUALITIES[0],
+	);
 	const videoRef = useRef<HTMLVideoElement>(null);
 
 	useLayoutEffect(() => {
@@ -53,6 +73,7 @@ export default function VideoPlayer({
 				endTime: duration[1],
 				mute,
 				isPreview,
+				quality: selectedQuality,
 			});
 
 			if (isPreview) {
@@ -64,6 +85,9 @@ export default function VideoPlayer({
 			} else {
 				downloadVideo(processedVideoUrl, videoUrl);
 			}
+		} catch (error) {
+			console.error("Error processing video:", error);
+			toast.error("Failed to process video");
 		} finally {
 			setProcessing(false);
 		}
@@ -71,21 +95,26 @@ export default function VideoPlayer({
 
 	return (
 		<div className="grid lg:grid-cols-[1fr_400px] gap-6">
-			<div className="relative rounded-lg overflow-hidden">
+			<div className="relative rounded-lg overflow-hidden bg-zinc-900">
 				<video
 					ref={videoRef}
-					className="w-full aspect-video"
+					className="w-full h-full aspect-video"
 					controls
 					src={videoUrl}
 				/>
 			</div>
 			<VideoTrimmer
+				muted={mute}
+				onMuteToggle={setMute}
 				clearPreviewUrl={() => setPreviewUrl(null)}
 				onProcessVideo={() => handleProcessVideo(false)}
 				onPreviewVideo={() => handleProcessVideo(true)}
 				duration={duration}
 				setDuration={setDuration}
 				processing={processing}
+				quality={selectedQuality}
+				onQualityChange={setSelectedQuality}
+				qualities={VIDEO_QUALITIES}
 			/>
 		</div>
 	);
