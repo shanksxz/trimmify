@@ -5,14 +5,6 @@ import { useLayoutEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { downloadVideo, formatTime, processVideo } from "../utils";
 import VideoTrimmer from "./video-trimmer";
-// import { VideoQuality, VIDEO_QUALITIES } from "@/features/video/types";
-
-export type VideoQuality = {
-	label: string;
-	width: number;
-	height: number;
-	bitrate: string;
-};
 
 export const VIDEO_QUALITIES: VideoQuality[] = [
 	{ label: "Original", width: -1, height: -1, bitrate: "copy" },
@@ -93,6 +85,13 @@ export default function VideoPlayer({
 		}
 	};
 
+	const handleMuteToggle = (muted: boolean) => {
+		setMute(muted);
+		if (videoRef.current) {
+			videoRef.current.muted = muted;
+		}
+	};
+
 	return (
 		<div className="grid lg:grid-cols-[1fr_400px] gap-6">
 			<div className="relative rounded-lg overflow-hidden bg-zinc-900">
@@ -105,7 +104,7 @@ export default function VideoPlayer({
 			</div>
 			<VideoTrimmer
 				muted={mute}
-				onMuteToggle={setMute}
+				onMuteToggle={handleMuteToggle}
 				clearPreviewUrl={() => setPreviewUrl(null)}
 				onProcessVideo={() => handleProcessVideo(false)}
 				onPreviewVideo={() => handleProcessVideo(true)}
