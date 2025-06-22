@@ -1,4 +1,4 @@
-import { formatFileSize } from "../../drag-drop/utils";
+import { formatFileSize } from "@/features/drag-drop/utils";
 
 export function FileInfo({
 	name,

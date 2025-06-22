@@ -1,5 +1,6 @@
 "use client";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
 	Card,
@@ -17,7 +18,15 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { AlertTriangle, Download, Eye, Volume2, VolumeX } from "lucide-react";
 import { useState } from "react";
+import type { VideoTrimmerProps } from "../types";
 import { validateTimeFormat, validateTimeRange } from "../utils";
 
 export default function VideoTrimmer({
@@ -32,19 +41,7 @@ export default function VideoTrimmer({
 	qualities,
 	muted,
 	onMuteToggle,
-}: {
-	onProcessVideo: () => void | Promise<void>;
-	onPreviewVideo: () => void;
-	clearPreviewUrl: () => void;
-	duration: [string, string];
-	setDuration: (duration: [string, string]) => void;
-	processing: boolean;
-	quality: VideoQuality;
-	onQualityChange: (quality: VideoQuality) => void;
-	qualities: VideoQuality[];
-	muted: boolean;
-	onMuteToggle: (muted: boolean) => void;
-}) {
+}: VideoTrimmerProps) {
 	const [error, setError] = useState<string | null>(null);
 
 	const handleDurationChange = (index: 0 | 1, value: string) => {
@@ -67,98 +64,154 @@ export default function VideoTrimmer({
 	};
 
 	return (
-		<div className="flex flex-col gap-4">
-			<Card className="border-none shadow-none bg-white/50">
-				<CardHeader className="pb-4">
-					<CardTitle className="text-lg font-medium">Video Settings</CardTitle>
-					<CardDescription className="text-sm text-muted-foreground">
-						Adjust video quality and trim settings
-					</CardDescription>
-				</CardHeader>
-				<CardContent className="space-y-4">
-					<div className="space-y-4">
-						<div className="space-y-2">
-							<div className="flex flex-col gap-2">
-								<Label className="text-sm font-medium">Video Quality</Label>
-								<p className="text-sm text-yellow-600">
-									⚠️ Warning: Client-side video processing speed depends on your
-									device's capabilities. Higher quality settings (e.g., 1080p)
-									may take significantly longer to process on less powerful
-									devices.
-								</p>
-								<Select
-									value={quality.label}
-									onValueChange={(value) => {
-										const newQuality = qualities.find((q) => q.label === value);
-										if (newQuality) onQualityChange(newQuality);
-									}}
-								>
-									<SelectTrigger className="w-full bg-white">
-										<SelectValue placeholder="Select quality" />
-									</SelectTrigger>
-									<SelectContent>
-										{qualities.map((q) => (
-											<SelectItem key={q.label} value={q.label}>
-												{q.label}
-											</SelectItem>
-										))}
-									</SelectContent>
-								</Select>
+		<TooltipProvider>
+			<div className="flex flex-col gap-4">
+				<Card>
+					<CardHeader className="pb-4">
+						<CardTitle className="text-lg font-medium flex items-center gap-2">
+							Video Settings
+							<Badge variant="secondary" className="text-xs">
+								FFmpeg
+							</Badge>
+						</CardTitle>
+						<CardDescription className="text-sm text-muted-foreground">
+							Adjust video quality and trim settings
+						</CardDescription>
+					</CardHeader>
+					<CardContent className="space-y-6">
+						<div className="space-y-3">
+							<Label className="text-sm font-medium">Video Quality</Label>
+
+							<div className="flex items-start gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+								<AlertTriangle className="h-4 w-4 text-yellow-600 mt-0.5 flex-shrink-0" />
+								<div className="text-sm text-yellow-800">
+									<p className="font-medium mb-1">Performance Notice</p>
+									<p className="text-xs">
+										Higher quality settings may take longer to process on less
+										powerful devices.
+									</p>
+								</div>
+							</div>
+
+							<Select
+								value={quality.label}
+								onValueChange={(value) => {
+									const newQuality = qualities.find((q) => q.label === value);
+									if (newQuality) onQualityChange(newQuality);
+								}}
+							>
+								<SelectTrigger>
+									<SelectValue placeholder="Select quality" />
+								</SelectTrigger>
+								<SelectContent>
+									{qualities.map((q) => (
+										<SelectItem key={q.label} value={q.label}>
+											<div className="flex items-center justify-between w-full">
+												<span>{q.label}</span>
+												{q.width !== -1 && (
+													<Badge variant="outline" className="ml-2 text-xs">
+														{q.width}x{q.height}
+													</Badge>
+												)}
+											</div>
+										</SelectItem>
+									))}
+								</SelectContent>
+							</Select>
+						</div>
+
+						<div className="flex items-center justify-between">
+							<Label className="text-sm font-medium">Audio</Label>
+							<Tooltip>
+								<TooltipTrigger asChild>
+									<Button
+										variant={muted ? "destructive" : "outline"}
+										size="sm"
+										onClick={() => onMuteToggle(!muted)}
+									>
+										{muted ? (
+											<VolumeX className="h-4 w-4 mr-2" />
+										) : (
+											<Volume2 className="h-4 w-4 mr-2" />
+										)}
+										{muted ? "Muted" : "Enabled"}
+									</Button>
+								</TooltipTrigger>
+								<TooltipContent>
+									<p>{muted ? "Enable audio" : "Mute audio"}</p>
+								</TooltipContent>
+							</Tooltip>
+						</div>
+
+						<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+							<div className="space-y-2">
+								<Label className="text-sm font-medium">Start Time</Label>
+								<Input
+									type="text"
+									value={duration[0]}
+									onChange={(e) => handleDurationChange(0, e.target.value)}
+									placeholder="00:00:00"
+									className={error ? "border-destructive" : ""}
+								/>
+							</div>
+							<div className="space-y-2">
+								<Label className="text-sm font-medium">End Time</Label>
+								<Input
+									type="text"
+									value={duration[1]}
+									onChange={(e) => handleDurationChange(1, e.target.value)}
+									placeholder="00:00:00"
+									className={error ? "border-destructive" : ""}
+								/>
 							</div>
 						</div>
-						<div className="flex items-center justify-between">
-							<Label className="text-sm font-medium">Mute Video</Label>
+
+						{error && (
+							<div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-md">
+								<AlertTriangle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
+								<p className="text-sm text-red-800">{error}</p>
+							</div>
+						)}
+					</CardContent>
+				</Card>
+
+				<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+					<Tooltip>
+						<TooltipTrigger asChild>
 							<Button
+								size="lg"
+								onClick={onPreviewVideo}
+								disabled={processing || !!error}
 								variant="outline"
-								size="sm"
-								onClick={() => onMuteToggle(!muted)}
-								className={muted ? "bg-red-100" : ""}
+								className="w-full"
 							>
-								{muted ? "Unmute" : "Mute"}
+								<Eye className="h-4 w-4 mr-2" />
+								{processing ? "Processing..." : "Preview"}
 							</Button>
-						</div>
-						<div className="space-y-2">
-							<Label className="text-sm font-medium">Start Time</Label>
-							<Input
-								className="w-full bg-white"
-								type="text"
-								value={duration[0]}
-								onChange={(e) => handleDurationChange(0, e.target.value)}
-								placeholder="00:00:00"
-							/>
-						</div>
-						<div className="space-y-2">
-							<Label className="text-sm font-medium">End Time</Label>
-							<Input
-								className="w-full bg-white"
-								type="text"
-								value={duration[1]}
-								onChange={(e) => handleDurationChange(1, e.target.value)}
-								placeholder="00:00:00"
-							/>
-						</div>
-						{error && <p className="text-sm text-destructive">{error}</p>}
-					</div>
-				</CardContent>
-			</Card>
-			<Button
-				size="lg"
-				onClick={onPreviewVideo}
-				disabled={processing || !!error}
-				variant="default"
-				className="w-full bg-zinc-900 hover:bg-zinc-800 text-white"
-			>
-				{processing ? "Processing..." : "Preview"}
-			</Button>
-			<Button
-				onClick={onProcessVideo}
-				size="lg"
-				disabled={processing || !!error}
-				variant="default"
-				className="w-full bg-zinc-900 hover:bg-zinc-800 text-white"
-			>
-				{processing ? "Processing..." : "Download Edited Video"}
-			</Button>
-		</div>
+						</TooltipTrigger>
+						<TooltipContent>
+							<p>Preview your trimmed video before downloading</p>
+						</TooltipContent>
+					</Tooltip>
+
+					<Tooltip>
+						<TooltipTrigger asChild>
+							<Button
+								onClick={onProcessVideo}
+								size="lg"
+								disabled={processing || !!error}
+								className="w-full"
+							>
+								<Download className="h-4 w-4 mr-2" />
+								{processing ? "Processing..." : "Download"}
+							</Button>
+						</TooltipTrigger>
+						<TooltipContent>
+							<p>Process and download your trimmed video</p>
+						</TooltipContent>
+					</Tooltip>
+				</div>
+			</div>
+		</TooltipProvider>
 	);
 }

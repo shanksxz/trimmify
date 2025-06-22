@@ -1,13 +1,13 @@
 "use client";
 
 import { Editor } from "@/components/layout/editor";
-import { VIDEO_CONFIG } from "@/features/drag-drop/constants";
 import { UploadZone } from "@/features/uploads/components/upload-zone";
 import { Preview } from "@/features/video/components/video-preview";
+import { VIDEO_CONFIG } from "@/utils/constants";
+import { formatFileSize } from "@/utils/formatters";
 import { useEffect, useRef, useState } from "react";
 import React from "react";
 import { toast } from "sonner";
-import { formatFileSize } from "../utils";
 
 export default function DragDrop() {
 	const [isDragging, setIsDragging] = useState(false);
@@ -111,7 +111,7 @@ export default function DragDrop() {
 	}
 
 	return (
-		<div className="flex md:p-6 p-2 items-center justify-center h-dvh w-full bg-background">
+		<div className="flex items-start justify-center min-h-dvh w-full bg-background overflow-auto">
 			<Editor file={selectedFile} videoUrl={videoUrl} onBack={handleBack} />
 		</div>
 	);

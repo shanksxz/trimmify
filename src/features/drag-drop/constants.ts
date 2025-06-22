@@ -1,5 +1,9 @@
-export const VIDEO_CONFIG = {
-	format: "video/mp4",
-	maxSize: 500 * 1024 * 1024, // 500MB
-	acceptType: "video/mp4",
+export { VIDEO_CONFIG } from "@/utils/constants";
+
+export const DRAG_DROP_STATES = {
+	IDLE: "idle",
+	DRAGGING: "dragging",
+	DROPPED: "dropped",
 } as const;
+
+export const ALLOWED_FILE_TYPES = ["video/mp4"] as const;
