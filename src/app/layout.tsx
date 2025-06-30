@@ -4,7 +4,9 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import dynamic from "next/dynamic";
 
-const FfmpegProvider = dynamic(() => import("@/utils/context"), { ssr: false });
+const FfmpegProvider = dynamic(() => import("@/hooks/use-ffmpeg"), {
+	ssr: false,
+});
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
@@ -18,7 +20,7 @@ export default function RootLayout({
 	children: React.ReactNode;
 }>) {
 	return (
-		<html lang="en">
+		<html lang="en" className="dark">
 			<body className={inter.className}>
 				<main>
 					<FfmpegProvider>{children}</FfmpegProvider>

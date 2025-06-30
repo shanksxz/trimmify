@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { FileInfo } from "../../uploads/components/file-info";
+import { FileInfo } from "@/features/uploads/components/file-info";
 
 export function Preview({
 	file,

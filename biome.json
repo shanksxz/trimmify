@@ -15,11 +15,13 @@
 				"useExhaustiveDependencies": "off"
 			},
 			"suspicious": {
-				"noExplicitAny": "off"
+				"noExplicitAny": "warn",
+				"noArrayIndexKey": "warn"
 			},
 			"a11y": {
 				"useMediaCaption": "off",
-				"noSvgWithoutTitle": "warn"
+				"noSvgWithoutTitle": "warn",
+				"useKeyWithClickEvents": "warn"
 			},
 			"style": {
 				"noNonNullAssertion": "warn"

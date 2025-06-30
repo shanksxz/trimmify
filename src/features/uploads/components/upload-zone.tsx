@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { VIDEO_CONFIG } from "@/features/drag-drop/constants";
 import type React from "react";
-import { VIDEO_CONFIG } from "../../drag-drop/constants";
 import { UploadIcon } from "./upload-icon";
 
 export function UploadZone({
